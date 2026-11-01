@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Inscription{% if form %} — {{ form.title }}{% endif %}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f6fa; color: #1f2937; padding: 48px 16px; line-height: 1.5; }
+  .card { background: #fff; border-radius: 14px; box-shadow: 0 4px 24px rgba(0,0,0,.07); padding: 36px 28px; max-width: 520px; margin: 0 auto; text-align: center; }
+  .icon { font-size: 52px; margin-bottom: 8px; }
+  .ok { color: #16a34a; } .ko { color: #dc2626; } .wait { color: #d97706; }
+  h1 { font-size: 22px; margin-bottom: 10px; }
+  .msg { color: #4b5563; margin-bottom: 18px; }
+  .msg p { margin-bottom: 8px; }
+  dl { text-align: left; background: #f9fafb; border-radius: 10px; padding: 14px 18px; margin: 18px 0; font-size: 14px; }
+  dl div { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; }
+  dt { color: #6b7280; } dd { font-weight: 600; text-align: right; }
+  .btn { display: inline-block; margin: 6px 4px; padding: 11px 18px; border-radius: 8px; background: #2563eb; color: #fff; text-decoration: none; font-weight: 600; }
+  .btn.secondary { background: #eef2ff; color: #1d4ed8; }
+  .spinner { width: 40px; height: 40px; border: 4px solid #e5e7eb; border-top-color: #d97706; border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 16px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="card" id="box">
+{% if not valid %}
+  <div class="icon ko">✖</div>
+  <h1>Lien invalide</h1>
+  <p class="msg">Ce lien d'inscription n'est pas valide.</p>
+{% else %}
+  {% if status == "Payée" %}
+    <div class="icon ok">✔</div>
+    <h1>Inscription confirmée</h1>
+    <div class="msg">{{ (form.success_message or "Merci, votre inscription est confirmée.") | safe }}</div>
+  {% elif status == "En attente de paiement" and payment_status in ("failed", "expired", "cancelled") %}
+    <div class="icon ko">✖</div>
+    <h1>Paiement non abouti</h1>
+    <p class="msg">Votre inscription est enregistrée mais le paiement n'a pas abouti.</p>
+  {% elif status == "En attente de paiement" and payment_status == "pending" %}
+    <div class="spinner" id="spinner"></div>
+    <h1 id="title">Paiement en cours de confirmation…</h1>
+    <p class="msg" id="msg">Nous attendons la confirmation de l'opérateur. Cette page se mettra à jour automatiquement.</p>
+  {% elif status == "En attente de paiement" %}
+    <div class="icon wait">!</div>
+    <h1>Paiement en attente</h1>
+    <p class="msg">Votre inscription est enregistrée. Finalisez le paiement pour la confirmer.</p>
+  {% elif status == "Expirée" %}
+    <div class="icon ko">✖</div>
+    <h1>Inscription expirée</h1>
+    <p class="msg">Le paiement n'a pas été effectué dans le délai. Vous pouvez vous réinscrire.</p>
+  {% else %}
+    <div class="icon ko">✖</div>
+    <h1>Inscription annulée</h1>
+  {% endif %}
+
+  <dl>
+    <div><dt>Inscription</dt><dd>{{ registration.name }}</dd></div>
+    <div><dt>Nom</dt><dd>{{ registration.full_name }}</dd></div>
+    <div><dt>Formulaire</dt><dd>{{ form.title }}</dd></div>
+    <div><dt>Montant</dt><dd>{{ formatted_amount }}</dd></div>
+    {% if registration.paid_on %}<div><dt>Payée le</dt><dd>{{ frappe.utils.format_datetime(registration.paid_on, "dd/MM/yyyy HH:mm") }}</dd></div>{% endif %}
+  </dl>
+
+  {% if status == "Payée" %}
+    <a class="btn" href="{{ invoice_url }}">Télécharger la facture (PDF)</a>
+  {% elif retry_url and payment_status != "pending" %}
+    <a class="btn" href="{{ retry_url }}">Payer maintenant</a>
+  {% elif status in ("Expirée", "Annulée") %}
+    <a class="btn secondary" href="/inscription/{{ form.route }}">Nouvelle inscription</a>
+  {% endif %}
+
+  {% if status == "En attente de paiement" and payment_status == "pending" %}
+  <script>
+  (function () {
+    const params = new URLSearchParams({ ins: {{ ins | tojson }}, key: {{ key | tojson }} });
+    let n = 0;
+    function poll() {
+      n++;
+      fetch("/api/method/digikuntz_inscription.api.get_status?" + params, { headers: { "Accept": "application/json" } })
+        .then((r) => r.json())
+        .then((r) => {
+          const s = r.message || {};
+          if (s.status !== "En attente de paiement" || s.payment_status !== "pending") { window.location.reload(); return; }
+          if (n < 36) setTimeout(poll, 5000);
+          else {
+            document.getElementById("spinner").style.display = "none";
+            document.getElementById("title").textContent = "Confirmation en attente";
+            document.getElementById("msg").textContent =
+              "La confirmation n'est pas encore arrivée. Elle sera prise en compte automatiquement et vous recevrez un email : vous pouvez fermer cette page.";
+          }
+        })
+        .catch(() => { if (n < 36) setTimeout(poll, 5000); });
+    }
+    setTimeout(poll, 4000);
+  })();
+  </script>
+  {% endif %}
+{% endif %}
+</div>
+</body>
+</html>

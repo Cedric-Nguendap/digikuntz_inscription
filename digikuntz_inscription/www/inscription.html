@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ form.title if form else "Inscriptions" }}</title>
+<style>
+  :root { --primary: #2563eb; --primary-dark: #1d4ed8; --text: #1f2937; --muted: #6b7280; --border: #d1d5db; --error: #dc2626; --bg: #f5f6fa; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 32px 16px; line-height: 1.5; }
+  .card { background: #fff; border-radius: 14px; box-shadow: 0 4px 24px rgba(0,0,0,.07); padding: 36px 28px; width: 100%; max-width: 560px; margin: 0 auto; }
+  h1 { font-size: 24px; margin-bottom: 8px; }
+  .intro { color: var(--muted); margin-bottom: 20px; }
+  .intro p { margin-bottom: 8px; }
+  .price { display: inline-block; background: #eff6ff; color: var(--primary-dark); font-weight: 700; padding: 6px 12px; border-radius: 999px; margin-bottom: 24px; }
+  .field { margin-bottom: 18px; }
+  label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  label .req { color: var(--error); margin-left: 2px; }
+  input[type=text], input[type=email], input[type=tel], input[type=number], input[type=date], select, textarea {
+    width: 100%; padding: 11px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 15px; font-family: inherit; background: #fff; outline: none; transition: border .15s; }
+  input:focus, select:focus, textarea:focus { border-color: var(--primary); }
+  textarea { min-height: 110px; resize: vertical; }
+  .check { display: flex; gap: 10px; align-items: flex-start; font-weight: 500; }
+  .check input { margin-top: 4px; width: 18px; height: 18px; }
+  .help { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .err { font-size: 13px; color: var(--error); margin-top: 4px; display: none; }
+  .field.invalid input, .field.invalid select, .field.invalid textarea { border-color: var(--error); }
+  .field.invalid .err { display: block; }
+  .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  button { width: 100%; padding: 14px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 8px; }
+  button:hover:not(:disabled) { background: var(--primary-dark); }
+  button:disabled { opacity: .6; cursor: not-allowed; }
+  .alert { padding: 14px; border-radius: 8px; margin-bottom: 18px; font-size: 14px; }
+  .alert.error { background: #fef2f2; color: var(--error); }
+  .alert.warn { background: #fffbeb; color: #92400e; }
+  .alert.info { background: #eff6ff; color: var(--primary-dark); }
+  .list a { display: flex; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid #eee; color: var(--text); text-decoration: none; }
+  .list a:hover { color: var(--primary); }
+  .secure { text-align: center; font-size: 12px; color: var(--muted); margin-top: 16px; }
+</style>
+</head>
+<body>
+<div class="card">
+{% if mode == "list" %}
+  <h1>Inscriptions</h1>
+  <div class="list">
+  {% for f in forms %}
+    <a href="/inscription/{{ f.route }}"><span>{{ f.title }}</span><span>{{ frappe.utils.fmt_money(f.amount, currency=f.currency) }}</span></a>
+  {% else %}
+    <p class="intro">Aucune inscription ouverte pour le moment.</p>
+  {% endfor %}
+  </div>
+{% else %}
+  {% if preview %}<div class="alert warn">Aperçu : ce formulaire n'est pas publié, les visiteurs ne peuvent pas le voir.</div>{% endif %}
+  <h1>{{ form.title }}</h1>
+  {% if form.introduction %}<div class="intro">{{ form.introduction | safe }}</div>{% endif %}
+  <div class="price">{{ formatted_amount }}</div>
+
+  {% if closed_reason %}
+    <div class="alert error">{{ closed_reason }}</div>
+  {% else %}
+  <form id="reg-form" novalidate>
+    <div class="alert error" id="form-error" style="display:none"></div>
+    {% for f in fields %}
+    <div class="field" data-field="{{ f.fieldname }}">
+      {% if f.fieldtype == "Case à cocher" %}
+        <label class="check"><input type="checkbox" name="{{ f.fieldname }}" value="1"> <span>{{ f.label }}{% if f.reqd %}<span class="req">*</span>{% endif %}</span></label>
+      {% else %}
+        <label for="f_{{ f.fieldname }}">{{ f.label }}{% if f.reqd %}<span class="req">*</span>{% endif %}</label>
+        {% if f.fieldtype == "Texte long" %}
+          <textarea id="f_{{ f.fieldname }}" name="{{ f.fieldname }}" placeholder="{{ f.placeholder or '' }}" maxlength="5000" {% if f.reqd %}required{% endif %}></textarea>
+        {% elif f.fieldtype == "Liste de choix" %}
+          <select id="f_{{ f.fieldname }}" name="{{ f.fieldname }}" {% if f.reqd %}required{% endif %}>
+            <option value="">-- Choisir --</option>
+            {% for o in f.options %}<option value="{{ o }}">{{ o }}</option>{% endfor %}
+          </select>
+        {% else %}
+          {% set input_type = {"Email": "email", "Téléphone": "tel", "Nombre entier": "number", "Nombre décimal": "number", "Date": "date"}.get(f.fieldtype, "text") %}
+          <input id="f_{{ f.fieldname }}" name="{{ f.fieldname }}" type="{{ input_type }}"
+                 {% if f.fieldtype == "Nombre décimal" %}step="any"{% elif f.fieldtype == "Nombre entier" %}step="1"{% endif %}
+                 {% if f.fieldtype == "Téléphone" %}inputmode="tel" autocomplete="tel"{% elif f.fieldname == "full_name" %}autocomplete="name"{% elif f.fieldtype == "Email" %}autocomplete="email"{% endif %}
+                 placeholder="{{ f.placeholder or '' }}" {% if f.fieldtype == "Texte court" %}maxlength="140"{% endif %} {% if f.reqd %}required{% endif %}>
+        {% endif %}
+      {% endif %}
+      {% if f.description %}<div class="help">{{ f.description }}</div>{% endif %}
+      <div class="err"></div>
+    </div>
+    {% endfor %}
+    <div class="hp" aria-hidden="true"><label>Site web <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+    <button type="submit" id="submit-btn">{{ form.submit_label or "S'inscrire et payer" }} — {{ formatted_amount }}</button>
+    <div class="secure">🔒 Vous serez redirigé vers la page de paiement sécurisée.</div>
+  </form>
+
+  <script>
+  (function () {
+    const ROUTE = {{ form.route | tojson }};
+    const CSRF_TOKEN = {{ csrf_token | tojson }};
+    const formEl = document.getElementById("reg-form");
+    const btn = document.getElementById("submit-btn");
+    const btnLabel = btn.textContent;
+    const formError = document.getElementById("form-error");
+
+    function clearErrors() {
+      formError.style.display = "none";
+      formEl.querySelectorAll(".field").forEach((el) => { el.classList.remove("invalid"); el.querySelector(".err").textContent = ""; });
+    }
+    function showErrors(message, errors) {
+      formError.textContent = message || "Veuillez corriger le formulaire.";
+      formError.style.display = "block";
+      let first = null;
+      Object.entries(errors || {}).forEach(([fieldname, msg]) => {
+        const el = formEl.querySelector('.field[data-field="' + fieldname + '"]');
+        if (!el) return;
+        el.classList.add("invalid");
+        el.querySelector(".err").textContent = msg;
+        first = first || el;
+      });
+      (first || formError).scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    formEl.addEventListener("submit", function (e) {
+      e.preventDefault();
+      clearErrors();
+      const data = {};
+      formEl.querySelectorAll("input[name], select[name], textarea[name]").forEach((el) => {
+        if (el.name === "website") return;
+        data[el.name] = el.type === "checkbox" ? (el.checked ? 1 : 0) : el.value.trim();
+      });
+
+      btn.disabled = true;
+      btn.textContent = "Enregistrement…";
+      fetch("/api/method/digikuntz_inscription.api.submit", {
+        method: "POST",
+        headers: Object.assign(
+          { "Content-Type": "application/x-www-form-urlencoded", "Accept": "application/json" },
+          CSRF_TOKEN ? { "X-Frappe-CSRF-Token": CSRF_TOKEN } : {}
+        ),
+        body: new URLSearchParams({ route: ROUTE, data: JSON.stringify(data), website: formEl.website.value })
+      })
+        .then((r) => r.json().then((body) => ({ status: r.status, body })))
+        .then(({ status, body }) => {
+          const msg = body.message || {};
+          if (msg.ok && msg.payment_url) {
+            btn.textContent = "Redirection vers le paiement…";
+            window.location.href = msg.payment_url;
+            return;
+          }
+          const tooMany = status === 429 ? "Trop de tentatives. Réessayez dans quelques minutes." : null;
+          showErrors(tooMany || msg.error, msg.errors);
+          btn.disabled = false;
+          btn.textContent = btnLabel;
+        })
+        .catch(() => {
+          showErrors("Erreur réseau. Vérifiez votre connexion et réessayez.");
+          btn.disabled = false;
+          btn.textContent = btnLabel;
+        });
+    });
+  })();
+  </script>
+  {% endif %}
+{% endif %}
+</div>
+</body>
+</html>

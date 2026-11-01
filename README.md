@@ -1,39 +1,67 @@
 ### Digikuntz Inscription
 
-Platefrome d\'inscription avec payement
+Formulaires d'inscription publics **configurables sans code**, avec paiement en ligne via
+[digikuntz_frappe_payment](../digikuntz_frappe_payment) (Flutterwave, PawaPay).
 
 ### Installation
 
-You can install this app using the [bench](https://github.com/frappe/bench) CLI:
-
 ```bash
-cd $PATH_TO_YOUR_BENCH
-bench get-app $URL_OF_THIS_REPO --branch develop
-bench install-app digikuntz_inscription
+bench --site <site> install-app digikuntz_frappe_payment   # prérequis
+bench --site <site> install-app digikuntz_inscription
 ```
 
-### Contributing
+### Utilisation
 
-This app uses `pre-commit` for code formatting and linting. Please [install pre-commit](https://pre-commit.com/#installation) and enable it for this repository:
+1. **Inscriptions → Formulaires → Nouveau**
+   - *Titre*, *Société*, *Article facturé* (un service), *Montant*.
+   - *Champs supplémentaires* : libellé, type, obligatoire. Nom complet et Email sont toujours demandés,
+     le Téléphone est optionnel ou obligatoire.
+     Types : Texte court, Texte long, Email, Téléphone, Nombre entier, Nombre décimal, Date, Liste de choix
+     (un choix par ligne), Case à cocher (ex. « J'accepte le règlement », obligatoire = doit être cochée).
+   - Options : date de clôture, nombre maximum d'inscrits payés, délai de paiement, inscriptions multiples
+     avec le même email, passerelle (sinon celle par défaut de la société), email de confirmation.
+   - Cocher **Publié**. Avant publication, les gestionnaires voient la page en aperçu.
+2. Partager le lien : `https://<site>/inscription/<adresse>` (bouton « Copier le lien »).
+   `https://<site>/inscription` liste les formulaires ouverts.
+3. Suivre les inscriptions : **Inscriptions** (Workspace) ou la liste *Inscription*.
+   Les filtres par formulaire et par statut sont disponibles, et le formulaire affiche ses statistiques.
 
-```bash
-cd apps/digikuntz_inscription
-pre-commit install
+### Parcours du participant
+
+```
+/inscription/<adresse>  formulaire  ──►  Inscription (En attente de paiement)
+                                          + Client + Facture (soumise) + Demande de paiement
+                        ──► page de paiement (web ou Mobile Money, module digikuntz_frappe_payment)
+paiement confirmé (webhook / vérification automatique / retour du client)
+                        ──► Inscription « Payée » : date, passerelle, écriture de paiement, email de confirmation
+                        ──► /inscription-statut : confirmation + facture PDF
+non payée après le délai ──► « Expirée », facture et demande de paiement annulées automatiquement
 ```
 
-Pre-commit is configured to use the following tools for checking and formatting your code:
+Chaque inscription donne accès, depuis le desk, à sa facture (et son PDF), à sa demande de paiement, à son
+écriture de paiement et à la page de statut vue par le participant.
 
-- ruff
-- eslint
-- prettier
-- pyupgrade
-### CI
+### Sécurité
 
-This app can use GitHub Actions for CI. The following workflows are configured:
+- Pages de statut et factures accessibles uniquement par lien signé (`key=`).
+- Limitation de débit sur l'envoi du formulaire, champ piège anti-robots, validation de chaque champ côté serveur.
+- Double envoi / retour arrière : la même inscription et le même paiement sont repris (pas de facture en double).
+- Le statut « Payée » n'est posé que sur confirmation du module de paiement (vérification API), jamais par la page de retour.
 
-- CI: Installs this app and runs unit tests on every push to `develop` branch.
-- Linters: Runs [Frappe Semgrep Rules](https://github.com/frappe/semgrep-rules) and [pip-audit](https://pypi.org/project/pip-audit/) on every pull request.
+### Tests
 
+```bash
+bench --site <site> execute digikuntz_inscription.tests.e2e_check.run \
+      --kwargs "{'company': '<Société>', 'item': '<Article de service>'}"
+```
+
+Passerelles simulées, transaction annulée à la fin.
+
+### Prérequis
+
+- Génération des factures PDF : `wkhtmltopdf` **0.12.6 avec Qt patché** (paquet de
+  [wkhtmltopdf.org](https://wkhtmltopdf.org/downloads.html), pas celui des dépôts Ubuntu).
+- Emails de confirmation : un compte email sortant configuré.
 
 ### License
 

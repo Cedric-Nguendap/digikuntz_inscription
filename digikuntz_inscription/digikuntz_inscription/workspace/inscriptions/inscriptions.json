@@ -1,0 +1,43 @@
+{
+ "app": "digikuntz_inscription",
+ "charts": [],
+ "content": "[{\"id\":\"dgkHeader1\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Inscriptions</b></span>\",\"col\":12}},{\"id\":\"dgkSc1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Inscriptions payées\",\"col\":3}},{\"id\":\"dgkSc2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"En attente de paiement\",\"col\":3}},{\"id\":\"dgkSc3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Toutes les inscriptions\",\"col\":3}},{\"id\":\"dgkSc4\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Formulaires\",\"col\":3}},{\"id\":\"dgkSpacer1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"dgkCard1\",\"type\":\"card\",\"data\":{\"card_name\":\"Inscriptions\",\"col\":4}},{\"id\":\"dgkCard2\",\"type\":\"card\",\"data\":{\"card_name\":\"Facturation\",\"col\":4}}]",
+ "creation": "2026-11-01 12:00:00.000000",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "users",
+ "idx": 0,
+ "is_hidden": 0,
+ "label": "Inscriptions",
+ "links": [
+  {"hidden": 0, "is_query_report": 0, "label": "Inscriptions", "link_count": 2, "onboard": 0, "type": "Card Break"},
+  {"hidden": 0, "is_query_report": 0, "label": "Inscription", "link_count": 0, "link_to": "Inscription", "link_type": "DocType", "onboard": 0, "type": "Link"},
+  {"hidden": 0, "is_query_report": 0, "label": "Formulaire Inscription", "link_count": 0, "link_to": "Formulaire Inscription", "link_type": "DocType", "onboard": 0, "type": "Link"},
+  {"hidden": 0, "is_query_report": 0, "label": "Facturation", "link_count": 3, "onboard": 0, "type": "Card Break"},
+  {"hidden": 0, "is_query_report": 0, "label": "Factures", "link_count": 0, "link_to": "Sales Invoice", "link_type": "DocType", "onboard": 0, "type": "Link"},
+  {"hidden": 0, "is_query_report": 0, "label": "Demandes de paiement", "link_count": 0, "link_to": "Payment Request", "link_type": "DocType", "onboard": 0, "type": "Link"},
+  {"hidden": 0, "is_query_report": 0, "label": "Tentatives de paiement", "link_count": 0, "link_to": "Payment Attempt", "link_type": "DocType", "onboard": 0, "type": "Link"}
+ ],
+ "modified": "2026-11-01 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Digikuntz Inscription",
+ "name": "Inscriptions",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 30.0,
+ "shortcuts": [
+  {"color": "Green", "doc_view": "List", "format": "{} payées", "label": "Inscriptions payées", "link_to": "Inscription", "stats_filter": "[[\"Inscription\",\"status\",\"=\",\"Payée\",false]]", "type": "DocType"},
+  {"color": "Orange", "doc_view": "List", "format": "{} en attente", "label": "En attente de paiement", "link_to": "Inscription", "stats_filter": "[[\"Inscription\",\"status\",\"=\",\"En attente de paiement\",false]]", "type": "DocType"},
+  {"color": "Grey", "doc_view": "List", "label": "Toutes les inscriptions", "link_to": "Inscription", "type": "DocType"},
+  {"color": "Blue", "doc_view": "List", "label": "Formulaires", "link_to": "Formulaire Inscription", "type": "DocType"}
+ ],
+ "title": "Inscriptions",
+ "type": "Workspace"
+}

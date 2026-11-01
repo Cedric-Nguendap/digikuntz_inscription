@@ -1,7 +1,7 @@
 [project]
 name = "digikuntz_inscription"
 authors = [
-    { name = "Digikuntz", email = "cednguendap@gmail.com"}
+    { name = "Digikuntz", email = "choudja@gic.cm"}
 ]
 description = "Platefrome d'inscription avec payement"
 requires-python = ">=3.10"

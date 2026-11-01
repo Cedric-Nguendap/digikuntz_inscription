@@ -1,0 +1,83 @@
+{
+ "actions": [],
+ "creation": "2026-11-01 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "label",
+  "fieldtype",
+  "reqd",
+  "options",
+  "fieldname",
+  "placeholder",
+  "description"
+ ],
+ "fields": [
+  {
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "label": "Libellé",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 3
+  },
+  {
+   "fieldname": "fieldtype",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "Texte court\nTexte long\nEmail\nTéléphone\nNombre entier\nNombre décimal\nDate\nListe de choix\nCase à cocher",
+   "default": "Texte court",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "reqd",
+   "fieldtype": "Check",
+   "label": "Obligatoire",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "options",
+   "fieldtype": "Small Text",
+   "label": "Choix possibles",
+   "in_list_view": 1,
+   "columns": 2,
+   "depends_on": "eval:doc.fieldtype=='Liste de choix'",
+   "mandatory_depends_on": "eval:doc.fieldtype=='Liste de choix'",
+   "description": "Un choix par ligne"
+  },
+  {
+   "fieldname": "fieldname",
+   "fieldtype": "Data",
+   "label": "Nom technique",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 2,
+   "description": "Généré à partir du libellé. Ne change plus une fois des inscriptions reçues."
+  },
+  {
+   "fieldname": "placeholder",
+   "fieldtype": "Data",
+   "label": "Exemple affiché dans le champ"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Aide affichée sous le champ"
+  }
+ ],
+ "links": [],
+ "modified": "2026-11-01 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Digikuntz Inscription",
+ "name": "Champ Formulaire Inscription",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "istable": 1,
+ "editable_grid": 1
+}

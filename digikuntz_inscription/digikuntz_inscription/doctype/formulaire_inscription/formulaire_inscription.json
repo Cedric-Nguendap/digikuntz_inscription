@@ -1,0 +1,263 @@
+{
+ "actions": [],
+ "creation": "2026-11-01 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_general",
+  "title",
+  "route",
+  "published",
+  "column_break_general",
+  "company",
+  "closing_date",
+  "max_registrations",
+  "section_page",
+  "introduction",
+  "submit_label",
+  "success_message",
+  "section_fields",
+  "phone_required",
+  "form_fields",
+  "section_payment",
+  "item",
+  "amount",
+  "currency",
+  "column_break_payment",
+  "payment_gateway_account",
+  "customer_group",
+  "unpaid_expiry_hours",
+  "allow_multiple",
+  "section_email",
+  "send_confirmation_email",
+  "confirmation_subject",
+  "confirmation_message",
+  "section_stats",
+  "stats_html"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_general",
+   "fieldtype": "Section Break",
+   "label": "Général"
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Titre",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "route",
+   "fieldtype": "Data",
+   "label": "Adresse de la page",
+   "unique": 1,
+   "in_list_view": 1,
+   "description": "La page publique sera /inscription/&lt;adresse&gt;. Générée depuis le titre si vide."
+  },
+  {
+   "fieldname": "published",
+   "fieldtype": "Check",
+   "label": "Publié (inscriptions ouvertes)",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "column_break_general",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Société",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "closing_date",
+   "fieldtype": "Date",
+   "label": "Clôture des inscriptions",
+   "description": "Vide = pas de date limite"
+  },
+  {
+   "fieldname": "max_registrations",
+   "fieldtype": "Int",
+   "label": "Nombre maximum d'inscrits payés",
+   "description": "0 = illimité"
+  },
+  {
+   "fieldname": "section_page",
+   "fieldtype": "Section Break",
+   "label": "Page publique"
+  },
+  {
+   "fieldname": "introduction",
+   "fieldtype": "Text Editor",
+   "label": "Texte d'introduction"
+  },
+  {
+   "fieldname": "submit_label",
+   "fieldtype": "Data",
+   "label": "Libellé du bouton",
+   "default": "S'inscrire et payer"
+  },
+  {
+   "fieldname": "success_message",
+   "fieldtype": "Text Editor",
+   "label": "Message après paiement réussi",
+   "default": "<p>Merci ! Votre inscription est confirmée. Vous allez recevoir un email de confirmation.</p>"
+  },
+  {
+   "fieldname": "section_fields",
+   "fieldtype": "Section Break",
+   "label": "Champs du formulaire",
+   "description": "Nom complet et Email sont toujours demandés. Ajoutez ici les autres champs."
+  },
+  {
+   "fieldname": "phone_required",
+   "fieldtype": "Check",
+   "label": "Téléphone obligatoire",
+   "default": "1"
+  },
+  {
+   "fieldname": "form_fields",
+   "fieldtype": "Table",
+   "label": "Champs supplémentaires",
+   "options": "Champ Formulaire Inscription"
+  },
+  {
+   "fieldname": "section_payment",
+   "fieldtype": "Section Break",
+   "label": "Paiement"
+  },
+  {
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "label": "Article facturé",
+   "options": "Item",
+   "reqd": 1,
+   "description": "Article (service) utilisé sur la facture de chaque inscription"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Montant de l'inscription",
+   "options": "currency",
+   "reqd": 1
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Devise",
+   "options": "Currency",
+   "read_only": 1,
+   "fetch_from": "company.default_currency"
+  },
+  {
+   "fieldname": "column_break_payment",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "payment_gateway_account",
+   "fieldtype": "Link",
+   "label": "Compte de passerelle",
+   "options": "Payment Gateway Account",
+   "description": "Vide = passerelle par défaut de la société"
+  },
+  {
+   "fieldname": "customer_group",
+   "fieldtype": "Link",
+   "label": "Groupe client",
+   "options": "Customer Group",
+   "description": "Vide = groupe par défaut des paramètres de vente"
+  },
+  {
+   "fieldname": "unpaid_expiry_hours",
+   "fieldtype": "Int",
+   "label": "Délai de paiement (heures)",
+   "default": "72",
+   "description": "Passé ce délai, l'inscription non payée expire et la facture est annulée"
+  },
+  {
+   "fieldname": "allow_multiple",
+   "fieldtype": "Check",
+   "label": "Autoriser plusieurs inscriptions avec le même email"
+  },
+  {
+   "fieldname": "section_email",
+   "fieldtype": "Section Break",
+   "label": "Email de confirmation",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "send_confirmation_email",
+   "fieldtype": "Check",
+   "label": "Envoyer un email après paiement",
+   "default": "1"
+  },
+  {
+   "fieldname": "confirmation_subject",
+   "fieldtype": "Data",
+   "label": "Objet",
+   "default": "Confirmation de votre inscription : {{ doc.formulaire }}",
+   "depends_on": "send_confirmation_email"
+  },
+  {
+   "fieldname": "confirmation_message",
+   "fieldtype": "Text Editor",
+   "label": "Message",
+   "depends_on": "send_confirmation_email",
+   "default": "<p>Bonjour {{ doc.full_name }},</p><p>Nous avons bien reçu votre paiement de {{ frappe.utils.fmt_money(doc.amount, currency=doc.currency) }}. Votre inscription <b>{{ doc.name }}</b> est confirmée.</p>",
+   "description": "Variables : doc (Inscription), par ex. {{ doc.full_name }}, {{ doc.name }}, {{ doc.amount }}"
+  },
+  {
+   "fieldname": "section_stats",
+   "fieldtype": "Section Break",
+   "label": "Statistiques",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "stats_html",
+   "fieldtype": "HTML",
+   "label": "Statistiques"
+  }
+ ],
+ "links": [],
+ "modified": "2026-11-01 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Digikuntz Inscription",
+ "name": "Formulaire Inscription",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "role": "Sales Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "autoname": "field:title",
+ "naming_rule": "By fieldname",
+ "title_field": "title",
+ "track_changes": 1
+}
