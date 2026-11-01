@@ -218,6 +218,46 @@ def _scenarios(company, item, check):
 	except frappe.PageDoesNotExistError:
 		check("7. formulaire non publié invisible pour un visiteur", True)
 
+	# ------------------------------------------- 9. choix de la passerelle
+	frappe.set_user("Administrator")
+	pga_fw = frappe.db.get_value("Payment Gateway Account", {"company": company, "payment_gateway": "Flutterwave Gateway"}, "name")
+	default_pga = frappe.db.get_value("Payment Gateway Account", {"company": company, "is_default": 1}, "name")
+	form.reload()
+	form.published = 1
+	form.payment_gateway_account = pga
+	form.save()
+	third = dict(answers, email="passerelle.e2e@example.com")
+	frappe.set_user("Guest")
+	first = api.submit(form.route, json.dumps(third))
+	frappe.set_user("Administrator")
+	first_pr = frappe.db.get_value("Inscription", first.get("registration"), "payment_request")
+	check(f"9. passerelle du formulaire (PawaPay) prioritaire sur le défaut société ({default_pga})",
+	      frappe.db.get_value("Payment Request", first_pr, "payment_gateway_account") == pga, first)
+
+	form.payment_gateway_account = pga_fw
+	form.save()
+	frappe.set_user("Guest")
+	second = api.submit(form.route, json.dumps(third))
+	frappe.set_user("Administrator")
+	old = frappe.get_doc("Inscription", first.get("registration"))
+	check("9. passerelle modifiée puis réinscription -> nouvelle demande sur la nouvelle passerelle",
+	      second.get("ok") and second.get("registration") != old.name and not second.get("resumed")
+	      and frappe.db.get_value("Payment Request", frappe.db.get_value("Inscription", second.get("registration"), "payment_request"),
+	                              "payment_gateway") == "Flutterwave Gateway", second)
+	check("9. ancienne inscription annulée avec sa facture et sa demande de paiement",
+	      old.status == "Annulée" and frappe.db.get_value("Payment Request", old.payment_request, "docstatus") == 2
+	      and frappe.db.get_value("Sales Invoice", old.sales_invoice, "docstatus") == 2, (old.status, old.error))
+
+	form.payment_gateway_account = None
+	form.save()
+	frappe.set_user("Guest")
+	fourth = api.submit(form.route, json.dumps(dict(answers, email="defaut.e2e@example.com")))
+	frappe.set_user("Administrator")
+	check("9. sans passerelle sur le formulaire -> passerelle par défaut de la société",
+	      frappe.db.get_value("Payment Request", frappe.db.get_value("Inscription", fourth.get("registration"), "payment_request"),
+	                          "payment_gateway_account") == default_pga, fourth)
+	frappe.set_user("Guest")
+
 	# ------------------------------------------------------- 8. permissions
 	check("8. un visiteur ne peut pas lire les inscriptions", not frappe.has_permission("Inscription", "read"))
 	frappe.set_user("Administrator")

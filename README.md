@@ -66,3 +66,7 @@ Passerelles simulées, transaction annulée à la fin.
 ### License
 
 mit
+
+## Author
+
+Cédric Nguendap (cednguendap@gmail.com)

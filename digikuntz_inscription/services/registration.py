@@ -186,15 +186,40 @@ def _existing_registration(form, email):
 		fields=["name", "status", "payment_request", "payment_url"],
 		order_by="creation desc",
 	)
+	expected_account = get_payment_gateway_account(form)
 	for row in rows:
 		if row.status == "Payée" and not form.allow_multiple:
 			raise RegistrationError("Une inscription payée existe déjà avec cet email.", {"email": "Déjà inscrit."})
-		if row.status == "En attente de paiement" and row.payment_request and (
-			frappe.db.get_value("Payment Request", row.payment_request, "status") in OPEN_PR_STATUSES
-		):
+		if row.status != "En attente de paiement" or not row.payment_request:
+			continue
+		pr = frappe.db.get_value("Payment Request", row.payment_request, ["status", "payment_gateway_account"], as_dict=True)
+		if not pr or pr.status not in OPEN_PR_STATUSES:
+			continue
+		if pr.payment_gateway_account == expected_account:
 			# Reprendre le paiement en cours plutôt que créer une 2e facture
 			return {"registration": row.name, "payment_url": row.payment_url, "resumed": True}
+		# La passerelle du formulaire a changé depuis : on remplace l'ancienne demande
+		_replace_pending_registration(row.name)
 	return None
+
+
+def get_payment_gateway_account(form):
+	"""Compte de passerelle utilisé : celui du formulaire, sinon celui par défaut de la société."""
+	return form.payment_gateway_account or frappe.db.get_value(
+		"Payment Gateway Account", {"company": form.company, "is_default": 1}, "name"
+	)
+
+
+def _replace_pending_registration(name):
+	from digikuntz_inscription.services.cleanup import cancel_documents
+
+	registration = frappe.get_doc("Inscription", name)
+	with as_administrator():
+		cancel_documents(registration)
+	frappe.db.set_value("Inscription", name, {
+		"status": "Annulée",
+		"error": "Remplacée par une nouvelle inscription (la passerelle de paiement du formulaire a changé).",
+	})
 
 
 def _get_or_create_customer(form, registration):
@@ -252,8 +277,9 @@ def _create_payment_request(form, registration, invoice):
 		"return_doc": 1,
 		"mute_email": 1,
 	}
-	if form.payment_gateway_account:
-		args["payment_gateway_account"] = form.payment_gateway_account
+	account = get_payment_gateway_account(form)
+	if account:
+		args["payment_gateway_account"] = account
 	payment_request = make_payment_request(**args)
 	if payment_request.docstatus != 1 or not payment_request.payment_url:
 		raise RegistrationError("Le paiement n'a pas pu être préparé (passerelle non configurée pour la société).")

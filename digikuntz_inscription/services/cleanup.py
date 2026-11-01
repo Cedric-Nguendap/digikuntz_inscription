@@ -29,7 +29,7 @@ def expire_unpaid_registrations(commit=True):
 					frappe.db.commit()
 				continue
 			with as_administrator():
-				_cancel_documents(registration)
+				cancel_documents(registration)
 			frappe.db.set_value("Inscription", name, {
 				"status": "Expirée",
 				"error": "Non payée dans le délai : facture et demande de paiement annulées.",
@@ -45,7 +45,8 @@ def expire_unpaid_registrations(commit=True):
 	return names
 
 
-def _cancel_documents(registration):
+def cancel_documents(registration):
+	"""Annule la demande de paiement puis la facture d'une inscription non payée."""
 	if registration.payment_request:
 		pr = frappe.get_doc("Payment Request", registration.payment_request)
 		if pr.docstatus == 1 and pr.status not in ("Paid", "Cancelled"):
